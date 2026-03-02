@@ -1,0 +1,18 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary
+*.test
+
+# Output of go coverage
+*.out
+
+# Dependency vendor directory
+vendor/
+
+# Environment variables - never commit secrets
+.env
