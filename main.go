@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"time"
@@ -14,9 +13,18 @@ import (
 	"go-mysql-api/internal/service"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/sirupsen/logrus"
 )
 
 var db *sql.DB
+
+func init() {
+	logrus.SetFormatter(&logrus.JSONFormatter{
+		TimestampFormat: "2008-01-02 15:04:05",
+	})
+	logrus.SetOutput(os.Stdout)
+	logrus.SetLevel(logrus.InfoLevel)
+}
 
 func main() {
 	dsn := os.Getenv("DB_DSN")
@@ -26,12 +34,12 @@ func main() {
 	var err error
 	db, err = sql.Open("mysql", dsn)
 	if err != nil {
-		log.Fatal("Error in opening database connection", err)
+		logrus.WithField("error", err).Fatal("Error in opening database connection")
 	}
 
 	err = db.Ping()
 	if err != nil {
-		log.Fatal("Error in pinging database", err)
+		logrus.WithField("error", err).Fatal("Error in pinging database")
 	}
 
 	db.SetMaxOpenConns(10)
@@ -49,8 +57,8 @@ func main() {
 	mux.HandleFunc("/users/", userCtrl.HandleUserDetail)
 
 	handler := middleware.Logging(mux)
-	log.Println("Server running at :8080")
+	logrus.WithField("port", 8080).Info("Server running at :8080")
 	if err := http.ListenAndServe(":8080", handler); err != nil {
-		log.Fatal(err)
+		logrus.WithField("error", err).Fatal("Error in starting server")
 	}
 }

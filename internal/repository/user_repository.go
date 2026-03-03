@@ -3,6 +3,8 @@ package repository
 import (
 	"database/sql"
 	"go-mysql-api/internal/models"
+
+	"github.com/sirupsen/logrus"
 )
 
 type UserRepository struct {
@@ -12,6 +14,10 @@ type UserRepository struct {
 func (r *UserRepository) GetAll() ([]models.User, error) {
 	rows, err := r.DB.Query("SELECT id, name, email, role, admin_id FROM users")
 	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"query": "SELECT ALL",
+			"error": err,
+		}).Error("Error in getting all users")
 		return nil, err
 	}
 	defer rows.Close()
@@ -20,6 +26,10 @@ func (r *UserRepository) GetAll() ([]models.User, error) {
 	for rows.Next() {
 		var u models.User
 		if err := rows.Scan(&u.ID, &u.Name, &u.Email, &u.Role, &u.AdminID); err != nil {
+			logrus.WithFields(logrus.Fields{
+				"query": "SELECT ALL",
+				"error": err,
+			}).Error("Error in getting all users")
 			return nil, err
 		}
 		users = append(users, u)
@@ -43,9 +53,17 @@ func (r *UserRepository) GetByID(id int) (*models.User, error) {
 	query := "SELECT id, name, email, role, admin_id FROM users WHERE id = ?"
 	err := r.DB.QueryRow(query, id).Scan(&u.ID, &u.Name, &u.Email, &u.Role, &u.AdminID)
 	if err == sql.ErrNoRows {
+		logrus.WithFields(logrus.Fields{
+			"query": "SELECT BY ID",
+			"error": err,
+		}).Error("Error in getting user")
 		return nil, nil
 	}
 	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"query": "SELECT BY ID",
+			"error": err,
+		}).Error("Error in getting user")
 		return nil, err
 	}
 	return &u, nil
@@ -72,6 +90,10 @@ func (r *UserRepository) Delete(id int) error {
 func (r *UserRepository) GetByAdminID(id int) error {
 	rows, err := r.DB.Query("SELECT id, name, email, role, admin_id FROM users WHERE admin_id = ?", id)
 	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"query": "SELECT BY ADMIN ID",
+			"error": err,
+		}).Error("Error in getting user by admin ID")
 		return err
 	}
 	defer rows.Close()
@@ -80,6 +102,10 @@ func (r *UserRepository) GetByAdminID(id int) error {
 	for rows.Next() {
 		var u models.User
 		if err := rows.Scan(&u.ID, &u.Name, &u.Email, &u.Role, &u.AdminID); err != nil {
+			logrus.WithFields(logrus.Fields{
+				"query": "SELECT BY ADMIN ID",
+				"error": err,
+			}).Error("Error in getting user by admin ID")
 			return err
 		}
 		users = append(users, u)

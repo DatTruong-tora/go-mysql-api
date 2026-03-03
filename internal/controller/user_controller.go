@@ -6,6 +6,8 @@ import (
 	"go-mysql-api/internal/service"
 	"net/http"
 	"strconv"
+
+	"github.com/sirupsen/logrus"
 )
 
 type UserController struct {
@@ -17,6 +19,7 @@ func (c *UserController) HandleUsers(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		users, err := c.Service.GetAllUsers()
 		if err != nil {
+			logrus.WithError(err).Error("Error in getting all users")
 			c.sendError(w, http.StatusInternalServerError, "Không thể lấy danh sách")
 			return
 		}
@@ -25,10 +28,12 @@ func (c *UserController) HandleUsers(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPost:
 		var u models.User
 		if err := json.NewDecoder(r.Body).Decode(&u); err != nil {
+			logrus.WithError(err).Error("Error in decoding user")
 			c.sendError(w, http.StatusBadRequest, "Dữ liệu không hợp lệ")
 			return
 		}
 		if err := c.Service.CreateUser(&u); err != nil {
+			logrus.WithError(err).Error("Error in creating user")
 			c.sendError(w, http.StatusInternalServerError, err.Error())
 			return
 		}
@@ -40,7 +45,8 @@ func (c *UserController) HandleUserDetail(w http.ResponseWriter, r *http.Request
 	idStr := r.URL.Path[len("/users/"):]
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		c.sendError(w, http.StatusBadRequest, "ID không hợp lệ")
+		logrus.WithError(err).Error("Error in converting user ID")
+		c.sendError(w, http.StatusBadRequest, "Invalid ID")
 		return
 	}
 
@@ -48,26 +54,29 @@ func (c *UserController) HandleUserDetail(w http.ResponseWriter, r *http.Request
 	case http.MethodGet:
 		u, err := c.Service.GetUser(id)
 		if err != nil {
-			c.sendError(w, http.StatusNotFound, "Không tìm thấy user")
+			logrus.WithError(err).Error("Error in getting user")
+			c.sendError(w, http.StatusNotFound, "User not found")
 			return
 		}
-		c.sendJSON(w, http.StatusOK, u, "Thành công")
+		c.sendJSON(w, http.StatusOK, u, "Success")
 
 	case http.MethodPut:
 		var u models.User
 		json.NewDecoder(r.Body).Decode(&u)
 		if err := c.Service.UpdateUser(id, &u); err != nil {
-			c.sendError(w, http.StatusInternalServerError, "Cập nhật thất bại")
+			logrus.WithError(err).Error("Error in updating user")
+			c.sendError(w, http.StatusInternalServerError, "Update failed")
 			return
 		}
-		c.sendJSON(w, http.StatusOK, nil, "Cập nhật thành công")
+		c.sendJSON(w, http.StatusOK, nil, "Update success")
 
 	case http.MethodDelete:
 		if err := c.Service.RemoveUser(id); err != nil {
-			c.sendError(w, http.StatusInternalServerError, "Xóa thất bại")
+			logrus.WithError(err).Error("Error in deleting user")
+			c.sendError(w, http.StatusInternalServerError, "Delete failed")
 			return
 		}
-		c.sendJSON(w, http.StatusOK, nil, "Đã xóa user")
+		c.sendJSON(w, http.StatusOK, nil, "Deleted success")
 	}
 }
 
