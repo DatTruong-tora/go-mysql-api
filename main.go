@@ -53,12 +53,10 @@ func main() {
 	userCtrl := &controller.UserController{Service: userServ}
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/users", userCtrl.HandleUsers)
-	mux.HandleFunc("/users/", userCtrl.HandleUserDetail)
-
-	handler := middleware.Logging(mux)
+	mux.Handle("/users", middleware.Logging("Handle users")(http.HandlerFunc(userCtrl.HandleUsers)))
+	mux.Handle("/users/", middleware.Logging("Handle user detail")(http.HandlerFunc(userCtrl.HandleUserDetail)))
 	logrus.WithField("port", 8080).Info("Server running at :8080")
-	if err := http.ListenAndServe(":8080", handler); err != nil {
+	if err := http.ListenAndServe(":8080", mux); err != nil {
 		logrus.WithField("error", err).Fatal("Error in starting server")
 	}
 }
